@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+dist/
+build/
+analysis/
+*.aac
+*.mp3
+*.mp4
+*.m4a
+*.wav
+*.flac
+.browser-profile/
+
