@@ -25,12 +25,26 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--browser-profile", type=Path, help="延河课堂登录专用浏览器目录；省略时登录只保留本次运行")
     analyze.add_argument("--browser-timeout", type=int, default=300, help="等待登录及音频加载的秒数")
 
+    subcommands.add_parser("devices", help="列出可以录制系统播放声音的回环设备")
+
+    record = subcommands.add_parser("record", help="录制系统正在播放的声音，按 Ctrl+C 停止")
+    record.add_argument("output", type=Path, help="录音文件路径，支持 .flac（推荐）或 .wav")
+    record.add_argument("--duration", type=float, help="录制秒数；不指定则持续到按 Ctrl+C")
+    record.add_argument("--loopback", help="回环设备 ID；默认录制当前默认播放设备")
+    record.add_argument("--sample-rate", type=int, default=48000, help="采样率，默认 48000 Hz")
+    record.add_argument("--analyze", action="store_true", help="录制结束后运行转写、关键词索引和摘要")
+    record.add_argument("--out", type=Path, help="分析输出目录，默认与录音同目录下的同名文件夹")
+    record.add_argument("--model", default="turbo", help="Faster-Whisper 模型，默认 turbo")
+    record.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto", help="转写使用的计算设备")
+    record.add_argument("--language", default="zh", help="音频语言，默认 zh")
+    record.add_argument("--batch-size", type=int, default=8)
+
     report = subcommands.add_parser("report", help="用已有 transcript.jsonl 重新生成索引和报告，无需再次转写")
     report.add_argument("transcript", type=Path)
     report.add_argument("--out", type=Path, help="输出目录，默认转写文件所在目录")
     report.add_argument("--source", default="", help="报告中显示的原始页面或文件路径")
 
-    for command in (analyze, report):
+    for command in (analyze, report, record):
         command.add_argument("--keyword", action="append", default=[], help="额外检索词，可重复传入")
         command.add_argument("--ollama-model", help="本机 Ollama 模型名称；不传则使用原句摘录")
         command.add_argument("--ollama-url", default="http://127.0.0.1:11434", help="本机 Ollama 地址")
@@ -40,6 +54,29 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.command == "devices":
+            from .record import loopback_devices
+
+            devices, default_id = loopback_devices()
+            if not devices:
+                print("没有找到系统音频回环设备。请检查音频服务或虚拟回环设备。")
+            for device in devices:
+                marker = "（默认）" if device["id"] == default_id else ""
+                print(f"{device['id']}  {device['name']}{marker}")
+            return 0
+
+        if args.command == "record":
+            from .record import record_system_audio
+
+            output = args.output.resolve()
+            result = record_system_audio(output, duration=args.duration, loopback_id=args.loopback, sample_rate=args.sample_rate)
+            print(f"录音已保存：{output}；音频时长 {result['duration']:.1f} 秒", flush=True)
+            if result["peak"] < 0.001:
+                print("提示：录音接近静音，请检查网页是否正在播放、播放设备是否与回环设备一致。", file=sys.stderr)
+            if not args.analyze:
+                return 0
+            args.out = args.out or output.parent / output.stem
+
         if args.command == "analyze":
             if args.batch_size < 1:
                 raise ValueError("--batch-size 必须大于 0")
@@ -49,6 +86,15 @@ def main(argv: list[str] | None = None) -> int:
             metadata = transcribe_audio(audio, output_dir / "transcript.jsonl", model_name=args.model, device=args.device, language=args.language, batch_size=args.batch_size)
             print(f"转写完成：{metadata['segments']} 段，约 {metadata['duration'] / 60:.1f} 分钟", flush=True)
             source = display_source(args.source)
+            rows = load_transcript(output_dir / "transcript.jsonl")
+        elif args.command == "record":
+            if args.batch_size < 1:
+                raise ValueError("--batch-size 必须大于 0")
+            output_dir = args.out.resolve()
+            print(f"分析录音：{output}", flush=True)
+            metadata = transcribe_audio(output, output_dir / "transcript.jsonl", model_name=args.model, device=args.device, language=args.language, batch_size=args.batch_size)
+            print(f"转写完成：{metadata['segments']} 段，约 {metadata['duration'] / 60:.1f} 分钟", flush=True)
+            source = display_source(str(output))
             rows = load_transcript(output_dir / "transcript.jsonl")
         else:
             output_dir = (args.out or args.transcript.parent).resolve()

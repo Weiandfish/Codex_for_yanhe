@@ -2,7 +2,7 @@
 
 把课程音频转成可搜索的时间戳转写、作业／考试／签到索引和课程提要。默认全部在本机处理；如已运行本机 Ollama，可选择生成更自然的内容摘要。
 
-支持本地音频、直接媒体 URL，以及已生成的延河课堂录播链接（`/session/`）。**直播、视频画面中的文字和课件 OCR 不在当前版本范围内。**
+支持本地音频、直接媒体 URL、已生成的延河课堂录播链接（`/session/`），也可以录制电脑正在播放的直播声音。视频画面中的文字和课件 OCR 不在当前版本范围内。
 
 ## 快速开始
 
@@ -16,6 +16,26 @@ lecture-indexer analyze /path/to/lecture.aac --out analysis
 ```
 
 首次运行会下载语音识别模型。CPU 可直接使用；有 NVIDIA CUDA 12 / cuDNN 9 环境时可用 `--device cuda` 加速。Faster-Whisper 使用 PyAV 解码，不要求单独安装 FFmpeg。GPU 环境的配置以 [Faster-Whisper 官方说明](https://github.com/SYSTRAN/faster-whisper#gpu)为准。
+
+### 录制直播或其他系统声音
+
+安装可选录音依赖，并查看回环设备：
+
+```bash
+pip install -e ".[record]"
+lecture-indexer devices
+```
+
+在浏览器里播放课程后，开始录制。未指定时长会一直录到按 **Ctrl+C**，音频文件会正常保存。`.flac` 体积通常比 `.wav` 小。
+
+```bash
+lecture-indexer record lecture.flac
+lecture-indexer record lecture-hour.flac --duration 3600 --analyze
+```
+
+第二个命令录制 1 小时，随后把转写、关键词时间点和报告写入 `lecture-hour/`。需要选择其他播放设备时，先运行 `lecture-indexer devices`，再把列出的 ID 传给 `--loopback`；`--out` 可指定分析目录。录制时间轴包含播放中断时的静音，报告时间从开始录音算起。`--analyze` 在**停止录音后**运行，目前不会边录边转写。
+
+录制的是所选系统播放设备的**全部声音**，包括其他应用的提示音；请关闭不相关音源。Linux 上需要可用的 PulseAudio／PipeWire 回环输入；其他系统需要 `devices` 能列出回环设备。若录音接近静音，检查网页正在播放，并确认声音确实送往选中的设备。录音基于 [SoundCard 的回环录制接口](https://github.com/bastibe/SoundCard)。长时间录制前建议先试录几秒确认音量和设备。
 
 ### 延河课堂录播
 
@@ -66,7 +86,7 @@ lecture-indexer report analysis/transcript.jsonl --out analysis \
 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
-核心模块：`source.py` 取得音频，`transcribe.py` 运行 Faster-Whisper，`analysis.py` 生成索引和报告，`cli.py` 提供命令行。欢迎通过 issue 和 pull request 改进其他平台适配、关键词规则与报告模板。
+核心模块：`source.py` 取得音频，`record.py` 录制系统声音，`transcribe.py` 运行 Faster-Whisper，`analysis.py` 生成索引和报告，`cli.py` 提供命令行。欢迎通过 issue 和 pull request 改进其他平台适配、关键词规则与报告模板。
 
 仅处理你有权访问和保存的课程内容；使用时遵守课程平台和学校规定。
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lecture-audio-indexer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local lecture transcription, keyword timestamps, and summaries"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,10 +14,10 @@ dependencies = ["faster-whisper>=1.1,<2"]
 
 [project.optional-dependencies]
 yanhe = ["playwright>=1.50,<2"]
+record = ["SoundCard>=0.4.6,<1", "soundfile>=0.13,<1"]
 
 [project.scripts]
 lecture-indexer = "lecture_indexer.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lecture_indexer"]
-
