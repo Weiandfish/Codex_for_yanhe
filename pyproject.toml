@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lecture-audio-indexer"
-version = "0.2.0"
+version = "0.2.1"
 description = "Local lecture transcription, keyword timestamps, and summaries"
 readme = "README.md"
 requires-python = ">=3.10"

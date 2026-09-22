@@ -15,7 +15,7 @@ pip install -e .
 lecture-indexer analyze /path/to/lecture.aac --out analysis
 ```
 
-首次运行会下载语音识别模型。CPU 可直接使用；有 NVIDIA CUDA 12 / cuDNN 9 环境时可用 `--device cuda` 加速。Faster-Whisper 使用 PyAV 解码，不要求单独安装 FFmpeg。GPU 环境的配置以 [Faster-Whisper 官方说明](https://github.com/SYSTRAN/faster-whisper#gpu)为准。
+首次运行会下载语音识别模型。CPU 可直接使用；有 NVIDIA CUDA 12 / cuDNN 9 环境时可用 `--device cuda` 加速。默认 `--device auto` 检测到 CUDA 运行库缺失时会自动改用 CPU。Faster-Whisper 使用 PyAV 解码，不要求单独安装 FFmpeg。GPU 环境的配置以 [Faster-Whisper 官方说明](https://github.com/SYSTRAN/faster-whisper#gpu)为准。
 
 ### 录制直播或其他系统声音
 
