@@ -42,6 +42,17 @@ class AnalysisTests(unittest.TestCase):
             self.assertIn("签到：未检出", report)
             self.assertTrue((root / "transcript.txt").is_file())
 
+    def test_english_course_keywords_are_detected(self):
+        rows = [
+            row(5, 12, "Please hand in your homework by next Wednesday."),
+            row(20, 28, "There is no final exam, but we will have a quiz."),
+            row(40, 46, "I will take attendance with a roll call."),
+        ]
+        events = find_events(rows)
+        self.assertEqual({item["category"] for item in events}, {"作业", "考试", "签到"})
+        self.assertTrue(any("homework" in item["terms"] for item in events))
+        self.assertTrue(any("roll call" in item["terms"] for item in events))
+
 
 if __name__ == "__main__":
     unittest.main()

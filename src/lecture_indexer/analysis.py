@@ -13,10 +13,23 @@ from urllib.request import Request, urlopen
 
 
 DEFAULT_TERMS = {
-    "作业": ("作业", "交作业", "课后任务", "提交", "截止"),
-    "考试": ("考试", "必考", "要考", "期末", "期中", "考题", "考核", "测验", "小测", "A4纸"),
-    "签到": ("签到", "点名", "出勤", "打卡"),
-    "平时练习": ("随堂", "练习", "小题", "平时分", "平时成绩", "平常成绩"),
+    "作业": (
+        "作业", "交作业", "课后任务", "提交", "截止",
+        "homework", "assignment", "assignments", "submit", "submission",
+        "hand in", "turn in", "due", "deadline",
+    ),
+    "考试": (
+        "考试", "必考", "要考", "期末", "期中", "考题", "考核", "测验", "小测", "A4纸",
+        "exam", "examination", "final exam", "midterm", "quiz", "test",
+    ),
+    "签到": (
+        "签到", "点名", "出勤", "打卡",
+        "attendance", "sign in", "check in", "roll call",
+    ),
+    "平时练习": (
+        "随堂", "练习", "小题", "平时分", "平时成绩", "平常成绩",
+        "exercise", "exercises", "practice", "coursework",
+    ),
 }
 
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "延河课堂课程助手"
+  short_description: "Inspect and summarize Yanhe course recordings"
+  default_prompt: "Use $yanhe-course-assistant to inspect this Yanhe course, process new recordings, and report homework, exams, attendance, and a content summary."
